@@ -5,8 +5,10 @@
 #include <QTimer>
 #include <QTcpServer>
 #include <QTcpSocket>
+#include <QAbstractSocket>
 #include <QImage>
 #include <QPixmap>
+#include <QDebug>
 
 namespace Ui {
 class Tab1Camera;
@@ -29,6 +31,7 @@ private:
 private slots:
     void slotNewConnection();
     void slotReadData();
+    void slotClientDisconnected();
     void slotProcessImage();
 };
 

@@ -33,7 +33,13 @@ void Tab1Camera::slotNewConnection() {
         client->deleteLater();
     }
     client = server->nextPendingConnection();
+
+    // 클라이언트 연결에 타임아웃 설정
+    client->setSocketOption(QAbstractSocket::LowDelayOption, 1);
+    client->setSocketOption(QAbstractSocket::KeepAliveOption, 1);
+
     connect(client, SIGNAL(readyRead()), this, SLOT(slotReadData()));
+    connect(client, SIGNAL(disconnect()), this, SLOT(slotClientDisconnected()));
 
     QByteArray response = "서버와 연결되었습니다.";
     client->write(response);
@@ -68,6 +74,12 @@ void Tab1Camera::slotReadData() {
             ui->pTLcamView->setPixmap(QPixmap::fromImage(image));
         }
     }
+}
+
+void Tab1Camera::slotClientDisconnected() {
+    client->deleteLater();
+    client = nullptr;
+    qDebug() << "클라이언트가 연결을 끊었습니다.";
 }
 
 void Tab1Camera::slotProcessImage() {
