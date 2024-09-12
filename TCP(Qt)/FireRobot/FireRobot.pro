@@ -16,22 +16,15 @@ DEFINES += QT_DEPRECATED_WARNINGS
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
-    cameracapture.cpp \
-    keyboard.cpp \
     main.cpp \
     mainwidget.cpp \
-    socketclient.cpp \
     tab1camera.cpp \
 
 HEADERS += \
-    cameracapture.h \
-    keyboard.h \
     mainwidget.h \
-    socketclient.h \
     tab1camera.h \
 
 FORMS += \
-    keyboard.ui \
     mainwidget.ui \
     tab1camera.ui
 
