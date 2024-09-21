@@ -17,7 +17,7 @@ public class MainActivity extends AppCompatActivity {
 
     private ImageView imageView1;
     private ImageView imageView2;
-    private String serverIP = "10.10.141.50";  // 서버 IP
+    private String serverIP = "서버 IP";  // 서버 IP
     private int serverPort = 5002;  // 서버 포트
 
     @Override
