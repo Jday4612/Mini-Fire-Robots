@@ -17,7 +17,7 @@ public class MainActivity extends AppCompatActivity {
 
     private ImageView imageView1;
     private ImageView imageView2;
-    private String serverIP = "서버 IP";  // 서버의 IP 주소 입력
+    private String serverIP = "서버 IP";  // 서버 IP
     private int serverPort = 5002;  // 서버 포트
 
     @Override
@@ -38,7 +38,7 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    private class VideoStreamClient extends AsyncTask<Void, Bitmap[], Void> {
+    private class VideoStreamClient extends AsyncTask<Void, Object[], Void> {
 
         @Override
         protected Void doInBackground(Void... voids) {
@@ -47,22 +47,34 @@ public class MainActivity extends AppCompatActivity {
                 InputStream inputStream = socket.getInputStream();
 
                 while (true) {
-                    // 1. 먼저 16바이트의 크기 정보를 읽음
                     byte[] sizeBuffer = new byte[16];
                     int sizeRead = inputStream.read(sizeBuffer);
-                    if (sizeRead == -1) break;  // 연결이 종료되었을 때
+                    if (sizeRead == -1) break;
 
                     String sizeString = new String(sizeBuffer).trim();
-                    int frameSize;
-
-                    try {
-                        frameSize = Integer.parseInt(sizeString);
-                    } catch (NumberFormatException e) {
-                        Log.e("VideoStreamClient", "Received invalid size: " + sizeString);
-                        continue;  // 숫자가 아닌 경우 무시하고 다음 데이터 처리
+                    if (sizeString.isEmpty()) {
+                        Log.e("VideoStreamClient", "Received empty size string");
+                        continue;
                     }
 
-                    // 2. 프레임 데이터를 받을 배열 준비
+                    Log.d("VideoStreamClient", "Received size string: " + sizeString); // 추가된 로그
+
+                    // 카메라 ID와 크기 정보 분리
+                    int cameraId = Character.getNumericValue(sizeString.charAt(0));
+                    String sizeWithoutId = sizeString.substring(1).trim();
+                    if (sizeWithoutId.isEmpty()) {
+                        Log.e("VideoStreamClient", "Size without ID is empty");
+                        continue;
+                    }
+
+                    int frameSize;
+                    try {
+                        frameSize = Integer.parseInt(sizeWithoutId);
+                    } catch (NumberFormatException e) {
+                        Log.e("VideoStreamClient", "Received invalid size: " + sizeWithoutId);
+                        continue;
+                    }
+
                     byte[] frameBuffer = new byte[frameSize];
                     int bytesRead = 0;
                     while (bytesRead < frameSize) {
@@ -71,10 +83,9 @@ public class MainActivity extends AppCompatActivity {
                         bytesRead += result;
                     }
 
-                    // 3. 프레임 데이터로 Bitmap 생성
                     Bitmap bitmap = BitmapFactory.decodeByteArray(frameBuffer, 0, frameSize);
                     if (bitmap != null) {
-                        publishProgress(new Bitmap[]{bitmap}); // UI 업데이트
+                        publishProgress(new Object[]{bitmap, cameraId});
                     } else {
                         Log.e("VideoStreamClient", "Received null bitmap");
                     }
@@ -88,15 +99,19 @@ public class MainActivity extends AppCompatActivity {
         }
 
         @Override
-        protected void onProgressUpdate(Bitmap[]... bitmaps) {
-            if (bitmaps[0][0] != null) {
-                // 각 ImageView에 맞는 크기로 비트맵 리사이즈
-                Bitmap resizedBitmap1 = resizeBitmap(bitmaps[0][0], imageView1.getWidth(), imageView1.getHeight());
-                imageView1.setImageBitmap(resizedBitmap1);
+        protected void onProgressUpdate(Object[]... params) {
+            Bitmap bitmap = (Bitmap) params[0][0];
+            int cameraId = (int) params[0][1];
 
-                // 두 번째 ImageView를 위한 비트맵 추가
-//                Bitmap resizedBitmap2 = resizeBitmap(bitmaps[0][0], imageView2.getWidth(), imageView2.getHeight());
-//                imageView2.setImageBitmap(resizedBitmap2);
+            if (bitmap != null) {
+                // 각 ImageView에 맞는 크기로 비트맵 리사이즈
+                Bitmap resizedBitmap = resizeBitmap(bitmap, cameraId == 1 ? imageView1.getWidth() : imageView2.getWidth(),
+                        cameraId == 1 ? imageView1.getHeight() : imageView2.getHeight());
+                if (cameraId == 1) {
+                    imageView1.setImageBitmap(resizedBitmap);
+                } else if (cameraId == 2) {
+                    imageView2.setImageBitmap(resizedBitmap);
+                }
             }
         }
     }
@@ -122,4 +137,3 @@ public class MainActivity extends AppCompatActivity {
         return Bitmap.createScaledBitmap(bitmap, width, height, true);
     }
 }
-
