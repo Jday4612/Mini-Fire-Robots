@@ -118,10 +118,12 @@ void Tab1Camera::processFrame(QTcpSocket *client, cv::Mat& frame) {
 
     // 앱으로 프레임 전송
     if (appClient && appClient->state() == QAbstractSocket::ConnectedState) {
-        std::vector<uchar> buffer;
-        cv::imencode(".jpg", frame, buffer);
-        QByteArray imageData(reinterpret_cast<const char*>(buffer.data()), buffer.size());
-        sendFrame(imageData, client == clients[0] ? 1 : 2); // 1: CCTV1, 2: CCTV2
+        if (client == clients[0]) { // CCTV1 영상 전송
+            std::vector<uchar> buffer;
+            cv::imencode(".jpg", frame, buffer);
+            QByteArray imageData(reinterpret_cast<const char*>(buffer.data()), buffer.size());
+            sendFrame(imageData);
+        }
     }
 
     // QImage로 변환
@@ -133,9 +135,9 @@ void Tab1Camera::processFrame(QTcpSocket *client, cv::Mat& frame) {
     }
 }
 
-void Tab1Camera::sendFrame(const QByteArray &frame, int cameraId) {
-    // 크기 전송 (카메라 ID 포함)
-    QByteArray sizeData = QByteArray::number(cameraId) + QByteArray::number(frame.size()).rightJustified(15, '0');
+void Tab1Camera::sendFrame(const QByteArray &frame) {
+    // 크기 전송
+    QByteArray sizeData = QByteArray::number(frame.size()).rightJustified(16, '0');
     appClient->write(sizeData);
 
     // 프레임 전송
